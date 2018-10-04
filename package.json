@@ -8,13 +8,14 @@
     "crypto-js": "^3.1.9-1",
     "express": "^4.16.3",
     "level": "^4.0.0",
-    "nodemon": "^1.18.4"
+    "nodemon": "^1.18.4",
+    "validator": "^10.8.0"
   },
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app.js",
-    "server": "nodemon app.js"
+    "dev": "nodemon app.js"
   },
   "author": "Ivan IVANOV",
   "license": "ISC"

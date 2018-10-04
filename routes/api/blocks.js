@@ -48,4 +48,32 @@ router.post("/block", async (req, res) => {
   }
 });
 
+////////--------
+const validateRequest = require("../../validation/validateRequest");
+
+const ValidationRoutine = require("../../validation/ValidationRoutine");
+
+/**
+ * @route POST /requestValidation
+ * @desc validates the address
+ * @access Public
+ */
+router.post("/requestValidation", async (req, res) => {
+  try {
+    const validationRoutine = new ValidationRoutine();
+
+    const { address } = req.body;
+    const { isValid, errors } = validateRequest(req.body);
+
+    if (!isValid) {
+      return res.status(400).json(errors);
+    }
+    await validationRoutine.addStarRequest(address);
+    const response = await validationRoutine.getValueFromDB(address);
+    res.status(201).send(JSON.parse(response));
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 module.exports = router;
