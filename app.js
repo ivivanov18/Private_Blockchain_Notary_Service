@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 
 // Project imports
 const blocks = require("./routes/api/blocks");
+const messageSignatures = require("./routes/api/messageSignatures");
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.get("/", (req, res) => {
 
 // ROUTES
 app.use("/", blocks);
+app.use("/message-signature", messageSignatures);
 
 const PORT = 8000;
 
