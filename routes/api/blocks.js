@@ -33,7 +33,20 @@ router.get("/block/:height", async (req, res) => {
  */
 router.post("/block", async (req, res) => {
   try {
-    const { body } = req.body;
+    //TODO: check whether address has possibility to make registration
+    //TODO: convert HEX story
+    //TODO: check for length
+    const { address, dec, ra, story } = req.body;
+    console.log("REQ.BODY: ", req.body);
+    const body = {
+      adress: address,
+      star: {
+        dec: dec,
+        ra: ra,
+        story: story
+      }
+    };
+
     const { isValid, errors } = validateBlock(req.body);
 
     if (!isValid) {
