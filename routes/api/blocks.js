@@ -39,7 +39,7 @@ router.post("/block", async (req, res) => {
     const { address, dec, ra, story } = req.body;
     console.log("REQ.BODY: ", req.body);
     const body = {
-      adress: address,
+      address: address,
       star: {
         dec: dec,
         ra: ra,

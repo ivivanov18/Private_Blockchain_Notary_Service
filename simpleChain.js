@@ -206,7 +206,6 @@ class Blockchain {
    * @return {Promise}
    */
   getBlockByHash(hash) {
-    console.log("getBlockByHash");
     return new Promise((resolve, reject) => {
       let foundBlock = {};
       db.createReadStream()
@@ -227,6 +226,32 @@ class Blockchain {
         .on("end", function() {
           console.log("Stream ended");
           resolve(foundBlock);
+        });
+    });
+  }
+
+  /**
+   * @return {Promise}
+   */
+  getBlocksByAddress(address) {
+    return new Promise((resolve, reject) => {
+      let foundBlocksForAddress = [];
+      db.createReadStream()
+        .on("data", function(data) {
+          if (JSON.parse(data.value).body.adress === address) {
+            foundBlocksForAddress.push(JSON.parse(data.value));
+          }
+        })
+        .on("error", function(err) {
+          console.log("There was an error: ", err);
+          reject(err);
+        })
+        .on("close", function() {
+          console.log("Stream closed");
+        })
+        .on("end", function() {
+          console.log("Stream ended");
+          resolve(foundBlocksForAddress);
         });
     });
   }

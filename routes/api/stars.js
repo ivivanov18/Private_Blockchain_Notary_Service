@@ -16,8 +16,16 @@ router.get("/", async (req, res) => {
 router.get("/address::addr", async (req, res) => {
   try {
     const { addr } = req.params;
-    res.json({ message: `param is ${addr}` });
-  } catch (error) {}
+    const foundBlocksForAddress = await notaryBlockChain.getBlocksByAddress(
+      addr
+    );
+    res.json({ foundBlocksForAddress });
+  } catch (error) {
+    console.log(
+      "error while fetching the blocks by their address. The error is :",
+      error
+    );
+  }
 });
 // TODO: Search by Star Block Hash
 router.get("/hash::hash", async (req, res) => {
