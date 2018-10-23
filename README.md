@@ -27,9 +27,10 @@ The application provides a RESTFul API where users can register stars on a priva
 
 ## Functionalities offered
 
-- Users can register stars
-- Users can validate signatures
-- Users can register stars on the notary service for requests that have been validated
+- The user can register a star. To do so, the following three steps have to be respected in that order:
+  - Users can request star registration
+  - Users can validate signatures
+  - Users can register stars on the notary service for requests that have been validated
 - Users can find registered stars by:
   - address to which they belong
   - hash of the block
@@ -66,6 +67,10 @@ The API is based on the **Express.js** framework and provides the endpoints:
 
 #### How to test
 
+In _Postman_ or the following `curl` command: `curl -X "POST" "http://localhost:8000/requestValidation" \ -H 'Content-Type: application/json; charset=utf-8' \ -d $'{ "address": "<WALLETADDRESS>" }'` by replacing <WALLETADDRESS> with the according address on which you want to register the star.
+
+In order to test the next endpoint _Verify Message Signature Endpoint_, the user must copy the value of the key `message` from the response and sign it with its own key (used for the wallet address). This signed message will be used as payload for the next step to verify the message signature.
+
 ### Verify Message Signature Endpoint
 
 #### Description
@@ -90,6 +95,9 @@ The API is based on the **Express.js** framework and provides the endpoints:
   ```
 
 #### How to test
+
+To be able to test this step, the previous step `Validate User Request` must have been tested first.
+In _Postman_ or the following `curl` command: `curl -X "POST" "http://localhost:8000/message-signature/validate" \ -H 'Content-Type: application/json; charset=utf-8' \ -d $'{ "address": "<ADDRESS>", "signature": "<SIGNATURE OBTAINED BY SIGNING MESSAGE>" }'`
 
 ### Register Star Endpoint
 
@@ -122,9 +130,12 @@ The API is based on the **Express.js** framework and provides the endpoints:
 
 #### How to test
 
+To be able to test this step, the previous step `Validate Message Signature` must have been tested first.
+The test can be done either in _Postman_ or through the following `curl` command: `curl -X "POST" "http://localhost:8000/block" \ -H 'Content-Type: application/json; charset=utf-8' \ -d $'{ "address": "<ADDRESS OF REGISTRATION>", "star": { "dec": "<Declination>", "ra": "<right_ascension>", "story": "<TEXT, EXPLANATION HOW WAS FOUND>" } }'`
+
 ### Find Registered Star by Hash
 
-#### Endpoint details
+#### Description
 
 - url: `"http://localhost:8000/stars/address:[ADDRESS]"`
 - params:
@@ -166,6 +177,10 @@ The API is based on the **Express.js** framework and provides the endpoints:
 ]
 ```
 
+#### How to test
+
+In _Postman_ or the following _curl_ command `curl "http://localhost:8000/stars/hash:<HASH>`
+
 ### Find Registered Star by Address
 
 #### Description
@@ -195,6 +210,8 @@ The API is based on the **Express.js** framework and provides the endpoints:
 
 #### How to test
 
+In _Postman_ or the following _curl_ command: `curl "http://localhost:8000/stars/address:<ADDRESS TO BE SEARCHED>"`
+
 ### Find Registered Star by Height
 
 #### Description
@@ -222,6 +239,8 @@ The API is based on the **Express.js** framework and provides the endpoints:
   ```
 
 #### How to test
+
+In _Postman_ or _curl_ with the following command: `curl "http://localhost:8000/block/<BLOCK HEIGHT>"`
 
 ## How to run
 
