@@ -201,6 +201,35 @@ class Blockchain {
         });
     });
   }
+
+  /**
+   * @return {Promise}
+   */
+  getBlockByHash(hash) {
+    console.log("getBlockByHash");
+    return new Promise((resolve, reject) => {
+      let foundBlock = {};
+      db.createReadStream()
+        .on("data", function(data) {
+          console.log("DATA HASH: ", JSON.parse(data.value).hash);
+          if (JSON.parse(data.value).hash === hash) {
+            foundBlock = JSON.parse(data.value);
+          }
+          //console.log(data.key, "=", data.value);
+        })
+        .on("error", function(err) {
+          console.log("There was an error: ", err);
+          reject(err);
+        })
+        .on("close", function() {
+          console.log("Stream closed");
+        })
+        .on("end", function() {
+          console.log("Stream ended");
+          resolve(foundBlock);
+        });
+    });
+  }
 }
 
 module.exports.BlockChain = Blockchain;
