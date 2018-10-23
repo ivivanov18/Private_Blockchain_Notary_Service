@@ -5,6 +5,8 @@ const Block = require("../../simpleChain").Block;
 
 const validateBlock = require("../../validation/validateBlock");
 
+const { ascii_to_hexa, hexa_to_ascii } = require("../../utils/converters");
+
 let simpleChain = new Blockchain();
 
 /**
@@ -14,10 +16,23 @@ let simpleChain = new Blockchain();
  */
 router.get("/block/:height", async (req, res) => {
   const { height } = req.params;
+
   try {
     const block = await simpleChain.getBlock(height);
+
+    const story_in_ascii = hexa_to_ascii(block.body.star.story);
+
     res.status(200).json({
-      blockRequested: block
+      blockRequested: {
+        ...block,
+        body: {
+          ...block.body,
+          star: {
+            ...block.body.star,
+            story: story_in_ascii
+          }
+        }
+      }
     });
   } catch (error) {
     res.status(404).json({
@@ -34,24 +49,25 @@ router.get("/block/:height", async (req, res) => {
 router.post("/block", async (req, res) => {
   try {
     //TODO: check whether address has possibility to make registration
-    //TODO: convert HEX story
-    //TODO: check for length
-    const { address, dec, ra, story } = req.body;
-    console.log("REQ.BODY: ", req.body);
-    const body = {
-      address: address,
-      star: {
-        dec: dec,
-        ra: ra,
-        story: story
-      }
-    };
 
     const { isValid, errors } = validateBlock(req.body);
 
     if (!isValid) {
       return res.status(400).json(errors);
     }
+    const { address, dec, ra, story } = req.body;
+
+    const story_in_hex = ascii_to_hexa(story);
+
+    const body = {
+      address: address,
+      star: {
+        dec: dec,
+        ra: ra,
+        story: story_in_hex
+      }
+    };
+
     await simpleChain.addBlock(new Block(body));
     const blockHeight = await simpleChain.getBlockHeight();
     const lastBlock = await simpleChain.getBlock(blockHeight);
@@ -88,7 +104,5 @@ router.post("/requestValidation", async (req, res) => {
     console.log(error);
   }
 });
-
-// TODO: Search by Star Block Height
 
 module.exports = router;

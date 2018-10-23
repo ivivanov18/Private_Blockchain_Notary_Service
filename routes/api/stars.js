@@ -1,16 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const Blockchain = require("../../simpleChain").BlockChain;
-const Block = require("../../simpleChain").Block;
 
 let notaryBlockChain = new Blockchain();
-
-router.get("/", async (req, res) => {
-  try {
-    console.log("TEST STARS STARS");
-    res.json({ message: "It works" });
-  } catch (error) {}
-});
 
 // TODO: Search by Blockchain Wallet Address
 router.get("/address::addr", async (req, res) => {

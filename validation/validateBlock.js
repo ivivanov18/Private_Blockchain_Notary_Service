@@ -21,6 +21,16 @@ module.exports = function validateBlock(data) {
     errors.ra = "The right_ascension of the star cannot be empty";
   }
 
+  story = !isEmpty(story) ? story : "";
+  //TODO: Length less than 250 words or 500 bytes
+  if (!Validator.isByteLength(story, { min: 5, max: 500 })) {
+    errors.story = "The length of the story must be maximum 500 bytes.";
+  }
+
+  if (Validator.isEmpty(story)) {
+    errors.story = "The story of the star cannot be empty";
+  }
+
   return {
     errors,
     isValid: isEmpty(errors)
