@@ -12,15 +12,17 @@ const ValidationRoutine = require("../../validation/ValidationRoutine");
  */
 router.post("/requestValidation", async (req, res) => {
   try {
-    const validationRoutine = ValidationRoutine();
-
     const { address } = req.body;
     const { isValid, errors } = validateRequest(req.body);
 
     if (!isValid) {
       return res.status(400).json(errors);
     }
-    const response = await validationRoutine.validationRoutine(address);
+
+    const validationRoutine = new ValidationRoutine();
+
+    //const response = await validationRoutine.validationRoutine(address);
+    const response = await validationRoutine.addStarRequest(address);
     res.status(201).send(response);
   } catch (error) {
     console.log(error);

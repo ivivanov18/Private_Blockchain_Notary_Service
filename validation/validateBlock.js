@@ -24,7 +24,12 @@ module.exports = function validateBlock(data) {
   story = !isEmpty(story) ? story : "";
   //TODO: Length less than 250 words or 500 bytes
   if (!Validator.isByteLength(story, { min: 5, max: 500 })) {
-    errors.story = "The length of the story must be maximum 500 bytes.";
+    errors.storyLength = "The length of the story must be maximum 500 bytes.";
+  }
+
+  if (!Validator.isAscii(story)) {
+    errors.storyAsciiCheck =
+      "The story of the star must contain only ASCII characters";
   }
 
   if (Validator.isEmpty(story)) {

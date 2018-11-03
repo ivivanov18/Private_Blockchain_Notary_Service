@@ -41,6 +41,7 @@ router.get("/block/:height", async (req, res) => {
   }
 });
 
+//TODO: FIX RETURNED BLOCK AFTER CREATION
 /**
  * @route POST api/blocks/block
  * @desc creates the block with the specified body

@@ -20,7 +20,7 @@ router.post("/validation", async (req, res) => {
     if (!isValid) {
       return res.status(400).json(errors);
     }
-    const response = await validationRoutine.isSignatureValid(
+    const response = await validationRoutine.validateMessageSignature(
       address,
       signature
     );

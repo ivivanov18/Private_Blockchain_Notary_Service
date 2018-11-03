@@ -13,19 +13,33 @@ const db = level(chainDB, { createIfMissing: true }, function(err, db) {
 });
 
 class ValidationRoutine {
-  constructor() {
-    //console.log("chainDB:   ", chainDB);
-    //console.log("DB ---- :", db);
-  }
+  constructor() {}
 
+  /**
+   * First step in the star registration process
+   * @param {*} address
+   */
   async addStarRequest(address) {
+    //TODO: Check is star request already exists
+    //Check if alread star request
+    // try {
+    //   const savedRequestStr = await this.getValueFromDB(address);
+    //   const savedRequest = JSON.parse(savedRequestStr);
+
+    //   if (!isEmpty(savedRequest)) {
+    //     return { message: `Address ${address} already waiting for validation` };
+    //   }
+    // } catch (error) {
+    //   console.log("Error :", error);
+
+    // }
     const timestamp = Date.now();
     const message = `${address}:${timestamp}:starRegistry`;
     const requestValidation = {
       address,
       requestTimestamp: timestamp,
       message,
-      validationWindow: 300000
+      validationWindow: 300
     };
 
     this.addKeyValueToDB(address, JSON.stringify(requestValidation))
@@ -38,20 +52,45 @@ class ValidationRoutine {
       })
       .catch(err => console.log("ERROR while creating record: ", err));
   }
+
   // TODO: Throw error instead of false
-  async isSignatureValid(addressToCheck, signatureToCheck) {
+  async validateMessageSignature(addressToCheck, signatureToCheck) {
     try {
       const savedRequestStr = await this.getValueFromDB(addressToCheck);
-      console.log("SAVED REQUEST:", savedRequestStr);
       const savedRequest = JSON.parse(savedRequestStr);
 
       if (isEmpty(savedRequest)) {
         return false;
       }
 
-      if (savedRequest === "valid") {
-        console.log("already validated");
-        return true;
+      if (savedRequest["status"] !== undefined) {
+        if (savedRequest.status.messageSignature === "valid") {
+          //TODO return validation with adapted time window
+          const nowMinusFiveMinutes = Date.now() - 300 * 1000;
+          let windowLeft =
+            savedRequest.status.requestTimestamp - nowMinusFiveMinutes;
+          if (windowLeft < 0) {
+            try {
+              await this.removeValidation(addressToCheck);
+              return {
+                message:
+                  "The validation window is closed. The star registration request has been removed. Please make another request"
+              };
+            } catch (error) {
+              console.log("ERROR:", error);
+            }
+          } else {
+            //TODO: modify validationWindow, serialize, return
+            const validationWindow = windowLeft;
+            savedRequest.status.validationWindow = validationWindow;
+            await this.makeSignatureValid(
+              addressToCheck,
+              JSON.stringify(savedRequest)
+            );
+            const modifiedRequest = await this.getValueFromDB(addressToCheck);
+            return modifiedRequest;
+          }
+        }
       }
 
       const {
@@ -62,6 +101,7 @@ class ValidationRoutine {
       } = savedRequest;
 
       if (address !== addressToCheck) {
+        //TODO: adapt return
         return false;
       }
 
@@ -72,20 +112,36 @@ class ValidationRoutine {
           validationWindow
         )
       ) {
+        //TODO: adapt return
         return false;
       }
 
       if (!bitcoinMessage.verify(message, addressToCheck, signatureToCheck)) {
+        //TODO: adapt return
         return false;
       }
 
-      await this.makeSignatureValid(addressToCheck);
-      console.log(await this.getValueFromDB(addressToCheck));
+      const validResponse = {
+        registerStar: true,
+        status: {
+          address: address,
+          requestTimestamp: requestTimestamp,
+          message: message,
+          validationWindow: `${Math.floor(
+            (Date.now() - requestTimestamp) / 1000
+          )}`,
+          messageSignature: "valid"
+        }
+      };
+      await this.makeSignatureValid(addressToCheck, validResponse);
 
-      return true;
+      return validResponse;
     } catch (err) {
       console.log(err);
-      return false;
+      return {
+        registerStar: false,
+        ...savedRequest
+      };
     }
   }
 
@@ -93,15 +149,18 @@ class ValidationRoutine {
     return db.del(address);
   }
 
-  makeSignatureValid(address) {
-    return db.put(address, JSON.stringify("valid"));
+  makeSignatureValid(address, validResponse) {
+    return db.put(address, JSON.stringify(validResponse));
   }
 
   async isValidStarRegistrationAddress(addressToCheck) {
-    const validityFieldStr = await this.getValueFromDB(addressToCheck);
-    const validityField = JSON.parse(validityFieldStr);
-
-    return validityField === "valid" ? true : false;
+    //TODO: try/catch
+    const saveRequestStr = await this.getValueFromDB(addressToCheck);
+    const saveRequest = JSON.parse(saveRequestStr);
+    if (savedRequest["status"] !== undefined) {
+      return saveRequest.status.messageSignature === "valid" ? true : false;
+    }
+    return false;
   }
 
   /**
@@ -115,7 +174,7 @@ class ValidationRoutine {
   ) {
     const currentTime = currentTimestamp - saveTimestamp;
     console.log("CURRENT TIME:", currentTime);
-    return currentTime < validationWindowSaved ? true : false;
+    return currentTime < validationWindowSaved * 1000 ? true : false;
   }
 
   /**
