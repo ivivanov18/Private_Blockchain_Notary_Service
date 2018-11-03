@@ -3,6 +3,7 @@ const bitcoin = require("bitcoinjs-lib");
 const bitcoinMessage = require("bitcoinjs-message");
 
 const isEmpty = require("../validation/isEmpty");
+const wrapper = require("../utils/wrapper");
 
 const chainDB = "./validationbufferdata";
 const db = level(chainDB, { createIfMissing: true }, function(err, db) {
@@ -55,94 +56,86 @@ class ValidationRoutine {
 
   // TODO: Throw error instead of false
   async validateMessageSignature(addressToCheck, signatureToCheck) {
-    try {
-      const savedRequestStr = await this.getValueFromDB(addressToCheck);
-      const savedRequest = JSON.parse(savedRequestStr);
-
-      if (isEmpty(savedRequest)) {
-        return false;
-      }
-
-      if (savedRequest["status"] !== undefined) {
-        if (savedRequest.status.messageSignature === "valid") {
-          //TODO return validation with adapted time window
-          const nowMinusFiveMinutes = Date.now() - 300 * 1000;
-          let windowLeft =
-            savedRequest.status.requestTimestamp - nowMinusFiveMinutes;
-          if (windowLeft < 0) {
-            try {
-              await this.removeValidation(addressToCheck);
-              return {
-                message:
-                  "The validation window is closed. The star registration request has been removed. Please make another request"
-              };
-            } catch (error) {
-              console.log("ERROR:", error);
-            }
-          } else {
-            //TODO: modify validationWindow, serialize, return
-            const validationWindow = windowLeft;
-            savedRequest.status.validationWindow = validationWindow;
-            await this.makeSignatureValid(
-              addressToCheck,
-              JSON.stringify(savedRequest)
-            );
-            const modifiedRequest = await this.getValueFromDB(addressToCheck);
-            return modifiedRequest;
-          }
-        }
-      }
-
-      const {
-        address,
-        message,
-        validationWindow,
-        requestTimestamp
-      } = savedRequest;
-
-      if (address !== addressToCheck) {
-        //TODO: adapt return
-        return false;
-      }
-
-      if (
-        !this.isValidationWindowOpen(
-          Date.now(),
-          requestTimestamp,
-          validationWindow
-        )
-      ) {
-        //TODO: adapt return
-        return false;
-      }
-
-      if (!bitcoinMessage.verify(message, addressToCheck, signatureToCheck)) {
-        //TODO: adapt return
-        return false;
-      }
-
-      const validResponse = {
-        registerStar: true,
-        status: {
-          address: address,
-          requestTimestamp: requestTimestamp,
-          message: message,
-          validationWindow: `${Math.floor(
-            (Date.now() - requestTimestamp) / 1000
-          )}`,
-          messageSignature: "valid"
-        }
-      };
-      await this.makeSignatureValid(addressToCheck, validResponse);
-
-      return validResponse;
-    } catch (err) {
-      console.log(err);
+    const { error, data } = await wrapper(this.getValueFromDB(addressToCheck));
+    if (error) {
+      console.log("Address Not Found. The error is: ", error);
       return {
-        registerStar: false,
-        ...savedRequest
+        message: `The address ${addressToCheck} is not present in the DB.`
       };
     }
+
+    const savedRequest = JSON.parse(data);
+
+    // TODO: Refactor
+    if (savedRequest["status"] !== undefined) {
+      if (savedRequest.status.messageSignature === "valid") {
+        //TODO return validation with adapted time window
+        const nowMinusFiveMinutes = Date.now() - 300 * 1000;
+        let windowLeft =
+          savedRequest.status.requestTimestamp - nowMinusFiveMinutes;
+        if (windowLeft < 0) {
+          try {
+            await this.removeValidation(addressToCheck);
+            return {
+              message:
+                "The validation window is closed. The star registration request has been removed. Please make another request"
+            };
+          } catch (error) {
+            console.log("ERROR:", error);
+          }
+        } else {
+          const validationWindow = Math.floor(windowLeft / 1000);
+          savedRequest.status.validationWindow = validationWindow;
+          await this.makeSignatureValid(addressToCheck, savedRequest);
+          const modifiedRequest = await this.getValueFromDB(addressToCheck);
+          return modifiedRequest;
+        }
+      }
+    }
+
+    const {
+      address,
+      message,
+      validationWindow,
+      requestTimestamp
+    } = savedRequest;
+
+    if (address !== addressToCheck) {
+      //TODO: adapt return
+      return false;
+    }
+
+    if (
+      !this.isValidationWindowOpen(
+        Date.now(),
+        requestTimestamp,
+        validationWindow
+      )
+    ) {
+      //TODO: adapt return
+      return false;
+    }
+
+    if (!bitcoinMessage.verify(message, addressToCheck, signatureToCheck)) {
+      //TODO: adapt return
+      return false;
+    }
+
+    const validResponse = {
+      registerStar: true,
+      status: {
+        address: address,
+        requestTimestamp: requestTimestamp,
+        message: message,
+        validationWindow: `${Math.floor(
+          (requestTimestamp - Date.now() + 300 * 1000) / 1000
+        )}`,
+        messageSignature: "valid"
+      }
+    };
+    await this.makeSignatureValid(addressToCheck, validResponse);
+
+    return validResponse;
   }
 
   removeValidation(address) {
