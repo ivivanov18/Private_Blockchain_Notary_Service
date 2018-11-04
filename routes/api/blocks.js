@@ -58,15 +58,13 @@ router.post("/block", async (req, res) => {
     }
     const { address, dec, ra, story } = req.body;
 
-    //TODO: check address registrar True
-
     const story_in_hex = ascii_to_hexa(story);
 
     const body = {
-      address: address,
+      address,
       star: {
-        dec: dec,
-        ra: ra,
+        dec,
+        ra,
         story: story_in_hex
       }
     };

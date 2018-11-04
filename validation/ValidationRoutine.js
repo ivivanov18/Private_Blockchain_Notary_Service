@@ -21,37 +21,59 @@ class ValidationRoutine {
    * @param {*} address
    */
   async addStarRequest(address) {
-    //TODO: Check is star request already exists
-    //Check if alread star request
-    // try {
-    //   const savedRequestStr = await this.getValueFromDB(address);
-    //   const savedRequest = JSON.parse(savedRequestStr);
+    const { error, data } = await wrapper(this.getValueFromDB(address));
+    //Does not exist
+    if (error) {
+      const timestamp = Date.now();
+      const message = `${address}:${timestamp}:starRegistry`;
+      const requestValidation = {
+        address,
+        requestTimestamp: timestamp,
+        message,
+        validationWindow: 300
+      };
 
-    //   if (!isEmpty(savedRequest)) {
-    //     return { message: `Address ${address} already waiting for validation` };
-    //   }
-    // } catch (error) {
-    //   console.log("Error :", error);
+      this.addKeyValueToDB(address, JSON.stringify(requestValidation))
+        .then(async () => {
+          return await this.getValueFromDB(address);
+        })
+        .then(value => {
+          return value;
+        })
+        .catch(err => console.log("ERROR while creating record: ", err));
+    } else {
+      // Exists --> check validation window and decrease
+      const savedRequest = JSON.parse(data);
+      const nowMinusFiveMinutes = Date.now() - 300 * 1000;
+      let windowLeft = savedRequest.requestTimestamp - nowMinusFiveMinutes;
+      if (windowLeft < 0) {
+        try {
+          await this.removeValidation(address);
+          return {
+            message:
+              "The validation window is closed. Please make another request"
+          };
+        } catch (error) {
+          console.log("ERROR:", error);
+        }
+      } else {
+        const validationWindow = Math.floor(windowLeft / 1000);
+        savedRequest.validationWindow = validationWindow;
+        // await this.addKeyValueToDB(address, JSON.stringify(savedRequest));
 
-    // }
-    const timestamp = Date.now();
-    const message = `${address}:${timestamp}:starRegistry`;
-    const requestValidation = {
-      address,
-      requestTimestamp: timestamp,
-      message,
-      validationWindow: 300
-    };
+        // const updatedRequest = await this.getValueFromDB(address);
+        // return updatedRequest;
 
-    this.addKeyValueToDB(address, JSON.stringify(requestValidation))
-      .then(async () => {
-        return await this.getValueFromDB(address);
-      })
-      .then(value => {
-        console.log("VALUE: ", value);
-        return value;
-      })
-      .catch(err => console.log("ERROR while creating record: ", err));
+        this.addKeyValueToDB(address, JSON.stringify(savedRequest))
+          .then(async () => {
+            return await this.getValueFromDB(address);
+          })
+          .then(value => {
+            return value;
+          })
+          .catch(err => console.log("ERROR while creating record: ", err));
+      }
+    }
   }
 
   // TODO: Throw error instead of false
@@ -66,32 +88,32 @@ class ValidationRoutine {
 
     const savedRequest = JSON.parse(data);
 
-    // TODO: Refactor
-    if (savedRequest["status"] !== undefined) {
-      if (savedRequest.status.messageSignature === "valid") {
-        //TODO return validation with adapted time window
-        const nowMinusFiveMinutes = Date.now() - 300 * 1000;
-        let windowLeft =
-          savedRequest.status.requestTimestamp - nowMinusFiveMinutes;
-        if (windowLeft < 0) {
-          try {
-            await this.removeValidation(addressToCheck);
-            return {
-              message:
-                "The validation window is closed. The star registration request has been removed. Please make another request"
-            };
-          } catch (error) {
-            console.log("ERROR:", error);
-          }
-        } else {
-          const validationWindow = Math.floor(windowLeft / 1000);
-          savedRequest.status.validationWindow = validationWindow;
-          await this.makeSignatureValid(addressToCheck, savedRequest);
-          const modifiedRequest = await this.getValueFromDB(addressToCheck);
-          return modifiedRequest;
-        }
-      }
-    }
+    // // TODO: Refactor
+    // if (savedRequest["status"] !== undefined) {
+    //   if (savedRequest.status.messageSignature === "valid") {
+    //     //TODO return validation with adapted time window
+    //     const nowMinusFiveMinutes = Date.now() - 300 * 1000;
+    //     let windowLeft =
+    //       savedRequest.status.requestTimestamp - nowMinusFiveMinutes;
+    //     if (windowLeft < 0) {
+    //       try {
+    //         await this.removeValidation(addressToCheck);
+    //         return {
+    //           message:
+    //             "The validation window is closed. The star registration request has been removed. Please make another request"
+    //         };
+    //       } catch (error) {
+    //         console.log("ERROR:", error);
+    //       }
+    //     } else {
+    //       const validationWindow = Math.floor(windowLeft / 1000);
+    //       savedRequest.status.validationWindow = validationWindow;
+    //       await this.makeSignatureValid(addressToCheck, savedRequest);
+    //       const modifiedRequest = await this.getValueFromDB(addressToCheck);
+    //       return modifiedRequest;
+    //     }
+    //   }
+    // }
 
     const {
       address,
@@ -154,6 +176,24 @@ class ValidationRoutine {
       return saveRequest.status.messageSignature === "valid" ? true : false;
     }
     return false;
+  }
+
+  async doesStarRequestExist(address) {
+    try {
+      const { error, data } = await wrapper(this.getValueFromDB(address));
+      if (!error) {
+        console.log("Data type: ", typeof data);
+        return true;
+      }
+      console.log("Data type: ", typeof data);
+
+      return false;
+    } catch (error) {
+      console.error("Error: ", error);
+      console.log("Data type: ", typeof data);
+
+      return false;
+    }
   }
 
   /**

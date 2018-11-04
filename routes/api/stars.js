@@ -23,7 +23,6 @@ router.get("/address::addr", async (req, res) => {
 router.get("/hash::hash", async (req, res) => {
   try {
     const { hash } = req.params;
-    console.log("HASH FROM PARAMS:", hash);
     //TODO check whether null
     const blockFound = await notaryBlockChain.getBlockByHash(hash);
     res.json({ blockFound });

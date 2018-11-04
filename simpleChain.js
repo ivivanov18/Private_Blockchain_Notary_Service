@@ -238,7 +238,7 @@ class Blockchain {
       let foundBlocksForAddress = [];
       db.createReadStream()
         .on("data", function(data) {
-          if (JSON.parse(data.value).body.adress === address) {
+          if (JSON.parse(data.value).body.address === address) {
             foundBlocksForAddress.push(JSON.parse(data.value));
           }
         })
