@@ -5,12 +5,13 @@ const bodyParser = require("body-parser");
 const blocks = require("./routes/api/blocks");
 const stars = require("./routes/api/stars");
 const messageSignatures = require("./routes/api/messageSignatures");
-
+const Blockchain = require("./simpleChain").BlockChain;
 const app = express();
+const notaryBlockChain = new Blockchain();
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-
+app.set("blockchain", notaryBlockChain);
 app.get("/", (req, res) => {
   res.send("PRIVATE BLOCKCHAIN API");
 });

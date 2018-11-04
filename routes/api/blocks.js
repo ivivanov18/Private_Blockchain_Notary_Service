@@ -7,18 +7,18 @@ const validateBlock = require("../../validation/validateBlock");
 
 const { ascii_to_hexa, hexa_to_ascii } = require("../../utils/converters");
 
-let simpleChain = new Blockchain();
-
 /**
  * @route GET api/blocks/block/:height
  * @desc gets the block at the specified height
  * @access Public
  */
 router.get("/block/:height", async (req, res) => {
+  const blockchain = req.app.get("blockchain");
+
   const { height } = req.params;
 
   try {
-    const block = await simpleChain.getBlock(height);
+    const block = await blockchain.getBlock(height);
 
     const story_in_ascii = hexa_to_ascii(block.body.star.story);
 
@@ -48,6 +48,8 @@ router.get("/block/:height", async (req, res) => {
  * @access Public
  */
 router.post("/block", async (req, res) => {
+  const blockchain = req.app.get("blockchain");
+
   try {
     //TODO: check whether address has possibility to make registration
 
@@ -69,9 +71,9 @@ router.post("/block", async (req, res) => {
       }
     };
 
-    await simpleChain.addBlock(new Block(body));
-    const blockHeight = await simpleChain.getBlockHeight();
-    const lastBlock = await simpleChain.getBlock(blockHeight);
+    await blockchain.addBlock(new Block(body));
+    const blockHeight = await blockchain.getBlockHeight();
+    const lastBlock = await blockchain.getBlock(blockHeight);
     res.status(201).send({ blockAdded: lastBlock });
   } catch (error) {
     console.log(error);

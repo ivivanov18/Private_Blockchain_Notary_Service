@@ -39,9 +39,12 @@ class Blockchain {
         if (result === -1) {
           console.log("There are no blocks in the blockchain. Adding Genesis");
           this.addBlock(new Block("First block in the chain - Genesis block"))
-            .then(result =>
-              console.log("Genesis block was added to the blockchain")
-            )
+            .then(() => {
+              return this.getBlockHeight();
+            })
+            .then(result => {
+              console.log("Genesis block was added to the blockchain", result);
+            })
             .catch(err => console.log(err));
         }
       })
