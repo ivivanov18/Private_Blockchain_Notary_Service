@@ -10,7 +10,7 @@ const ValidationRoutine = require("../../validation/ValidationRoutine");
  * @desc validates the address
  * @access Public
  */
-router.post("/validation", async (req, res) => {
+router.post("/validate", async (req, res) => {
   try {
     const validationRoutine = new ValidationRoutine();
 
