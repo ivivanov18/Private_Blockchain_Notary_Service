@@ -92,14 +92,14 @@ const ValidationRoutine = require("../../validation/ValidationRoutine");
  */
 router.post("/requestValidation", async (req, res) => {
   try {
-    const validationRoutine = new ValidationRoutine();
-
     const { address } = req.body;
     const { isValid, errors } = validateRequest(req.body);
 
     if (!isValid) {
       return res.status(400).json(errors);
     }
+    const validationRoutine = new ValidationRoutine();
+
     await validationRoutine.addStarRequest(address);
     const response = await validationRoutine.getValueFromDB(address);
     res.status(201).send(JSON.parse(response));

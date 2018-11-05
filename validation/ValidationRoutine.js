@@ -21,9 +21,40 @@ class ValidationRoutine {
    * @param {*} address
    */
   async addStarRequest(address) {
-    const { error, data } = await wrapper(this.getValueFromDB(address));
-    //Does not exist
-    if (error) {
+    try {
+      const data = await this.getValueFromDB(address);
+      const savedRequest = JSON.parse(data);
+
+      const nowMinusFiveMinutes = Date.now() - 300 * 1000;
+      let windowLeft = savedRequest.requestTimestamp - nowMinusFiveMinutes;
+      if (windowLeft < 0) {
+        try {
+          await this.removeValidation(address);
+          return {
+            message:
+              "The validation window is closed. Please make another request"
+          };
+        } catch (error) {
+          console.log("ERROR:", error);
+        }
+      } else {
+        const validationWindow = Math.floor(windowLeft / 1000);
+        savedRequest.validationWindow = validationWindow;
+        await this.addKeyValueToDB(address, JSON.stringify(savedRequest));
+
+        const updatedRequest = await this.getValueFromDB(address);
+        return updatedRequest;
+
+        // this.addKeyValueToDB(address, JSON.stringify(savedRequest))
+        //   .then(async () => {
+        //     return await this.getValueFromDB(address);
+        //   })
+        //   .then(value => {
+        //     return value;
+        //   })
+        //   .catch(err => console.log("ERROR while creating record: ", err));
+      }
+    } catch (error) {
       const timestamp = Date.now();
       const message = `${address}:${timestamp}:starRegistry`;
       const requestValidation = {
@@ -41,38 +72,6 @@ class ValidationRoutine {
           return value;
         })
         .catch(err => console.log("ERROR while creating record: ", err));
-    } else {
-      // Exists --> check validation window and decrease
-      const savedRequest = JSON.parse(data);
-      const nowMinusFiveMinutes = Date.now() - 300 * 1000;
-      let windowLeft = savedRequest.requestTimestamp - nowMinusFiveMinutes;
-      if (windowLeft < 0) {
-        try {
-          await this.removeValidation(address);
-          return {
-            message:
-              "The validation window is closed. Please make another request"
-          };
-        } catch (error) {
-          console.log("ERROR:", error);
-        }
-      } else {
-        const validationWindow = Math.floor(windowLeft / 1000);
-        savedRequest.validationWindow = validationWindow;
-        // await this.addKeyValueToDB(address, JSON.stringify(savedRequest));
-
-        // const updatedRequest = await this.getValueFromDB(address);
-        // return updatedRequest;
-
-        this.addKeyValueToDB(address, JSON.stringify(savedRequest))
-          .then(async () => {
-            return await this.getValueFromDB(address);
-          })
-          .then(value => {
-            return value;
-          })
-          .catch(err => console.log("ERROR while creating record: ", err));
-      }
     }
   }
 

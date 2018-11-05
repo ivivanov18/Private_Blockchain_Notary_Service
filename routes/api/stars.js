@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 const Blockchain = require("../../simpleChain").BlockChain;
 
-// TODO: Search by Blockchain Wallet Address
 router.get("/address::addr", async (req, res) => {
   const notaryBlockChain = new Blockchain();
 
@@ -19,7 +18,7 @@ router.get("/address::addr", async (req, res) => {
     );
   }
 });
-// TODO: Search by Star Block Hash
+
 router.get("/hash::hash", async (req, res) => {
   const notaryBlockChain = new Blockchain();
 
@@ -32,7 +31,5 @@ router.get("/hash::hash", async (req, res) => {
     console.log("error in finding block. The error is: ", error);
   }
 });
-
-// TODO: Update Project README
 
 module.exports = router;

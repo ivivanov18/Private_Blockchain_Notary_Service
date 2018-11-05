@@ -6,8 +6,8 @@ const validateRequest = require("../../validation/validateRequest");
 const ValidationRoutine = require("../../validation/ValidationRoutine");
 
 /**
- * @route POST /message-signature/validation
- * @desc validates the address
+ * @route POST /message-signature/validate
+ * @desc validates the signature of the message received at the star request
  * @access Public
  */
 router.post("/validate", async (req, res) => {
