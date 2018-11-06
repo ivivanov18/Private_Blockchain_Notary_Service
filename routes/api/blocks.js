@@ -3,8 +3,13 @@ const router = express.Router();
 const Blockchain = require("../../simpleChain").BlockChain;
 const Block = require("../../simpleChain").Block;
 
+////////-------- Validation --------
+const validateRequest = require("../../validation/validateRequest");
 const validateBlock = require("../../validation/validateBlock");
 
+const ValidationRoutine = require("../../validation/ValidationRoutine");
+
+////////-------- UTILS --------
 const { ascii_to_hexa, hexa_to_ascii } = require("../../utils/converters");
 
 /**
@@ -76,14 +81,9 @@ router.post("/block", async (req, res) => {
     const lastBlock = await blockchain.getBlock(blockHeight);
     res.status(201).send({ blockAdded: lastBlock });
   } catch (error) {
-    console.log(error);
+    res.status(400).send({ error });
   }
 });
-
-////////--------
-const validateRequest = require("../../validation/validateRequest");
-
-const ValidationRoutine = require("../../validation/ValidationRoutine");
 
 /**
  * @route POST /requestValidation
@@ -103,7 +103,7 @@ router.post("/requestValidation", async (req, res) => {
     const response = await validationRoutine.addStarRequest(address);
     res.status(201).send(JSON.parse(response));
   } catch (error) {
-    console.log(error);
+    res.status(400).send({ error });
   }
 });
 

@@ -24,7 +24,7 @@ router.post("/requestValidation", async (req, res) => {
     const response = await validationRoutine.addStarRequest(address);
     res.status(201).send(response);
   } catch (error) {
-    console.log(error);
+    res.status(400).send({ error });
   }
 });
 

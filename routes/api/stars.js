@@ -12,10 +12,11 @@ router.get("/address::addr", async (req, res) => {
     );
     res.json({ foundBlocksForAddress });
   } catch (error) {
-    console.log(
-      "error while fetching the blocks by their address. The error is :",
-      error
-    );
+    const errorMsg = {
+      error: `Error while fetching the blocks by their address. The error is : 
+      ${error}`
+    };
+    res.status(400).send(errorMsg);
   }
 });
 
@@ -28,7 +29,7 @@ router.get("/hash::hash", async (req, res) => {
     const blockFound = await notaryBlockChain.getBlockByHash(hash);
     res.json({ blockFound });
   } catch (error) {
-    console.log("error in finding block. The error is: ", error);
+    res.status(400).send({ error });
   }
 });
 
