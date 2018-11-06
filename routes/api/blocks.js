@@ -100,8 +100,7 @@ router.post("/requestValidation", async (req, res) => {
     }
     const validationRoutine = new ValidationRoutine();
 
-    await validationRoutine.addStarRequest(address);
-    const response = await validationRoutine.getValueFromDB(address);
+    const response = await validationRoutine.addStarRequest(address);
     res.status(201).send(JSON.parse(response));
   } catch (error) {
     console.log(error);

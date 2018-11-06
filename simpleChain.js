@@ -74,14 +74,17 @@ class Blockchain {
     newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
 
     // Adding block object to chain
-    this.addBlockToDB(newBlock.height, JSON.stringify(newBlock))
-      .then(() => {
-        return this.getBlockFromDB(newBlock.height);
-      })
-      .then(value => value)
-      .catch(err => {
-        console.error(err);
-      });
+    // this.addBlockToDB(newBlock.height, JSON.stringify(newBlock))
+    //   .then(() => {
+    //     return this.getBlockFromDB(newBlock.height);
+    //   })
+    //   .then(value => value)
+    //   .catch(err => {
+    //     console.error(err);
+    //   });
+    await this.addBlock(newBlock.height, JSON.stringify(newBlock));
+    const addedBlock = await this.getBlockFromDB(newBlock.height);
+    return addedBlock;
   }
 
   /**

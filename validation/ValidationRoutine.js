@@ -25,15 +25,17 @@ class ValidationRoutine {
       const data = await this.getValueFromDB(address);
       const savedRequest = JSON.parse(data);
 
-      const nowMinusFiveMinutes = Date.now() - 300 * 1000;
+      const nowMinusFiveMinutes = Date.now() - 20 * 1000;
       let windowLeft = savedRequest.requestTimestamp - nowMinusFiveMinutes;
       if (windowLeft < 0) {
         try {
           await this.removeValidation(address);
-          return {
+          //TODO: Fix when deleted --> error notFound
+          const response = JSON.stringify({
             message:
               "The validation window is closed. Please make another request"
-          };
+          });
+          return response;
         } catch (error) {
           console.log("ERROR:", error);
         }
@@ -44,15 +46,6 @@ class ValidationRoutine {
 
         const updatedRequest = await this.getValueFromDB(address);
         return updatedRequest;
-
-        // this.addKeyValueToDB(address, JSON.stringify(savedRequest))
-        //   .then(async () => {
-        //     return await this.getValueFromDB(address);
-        //   })
-        //   .then(value => {
-        //     return value;
-        //   })
-        //   .catch(err => console.log("ERROR while creating record: ", err));
       }
     } catch (error) {
       const timestamp = Date.now();
@@ -61,17 +54,20 @@ class ValidationRoutine {
         address,
         requestTimestamp: timestamp,
         message,
-        validationWindow: 300
+        validationWindow: 20
       };
 
-      this.addKeyValueToDB(address, JSON.stringify(requestValidation))
-        .then(async () => {
-          return await this.getValueFromDB(address);
-        })
-        .then(value => {
-          return value;
-        })
-        .catch(err => console.log("ERROR while creating record: ", err));
+      // this.addKeyValueToDB(address, JSON.stringify(requestValidation))
+      //   .then(async () => {
+      //     return await this.getValueFromDB(address);
+      //   })
+      //   .then(value => {
+      //     return value;
+      //   })
+      //   .catch(err => console.log("ERROR while creating record: ", err));
+      await this.addKeyValueToDB(address, JSON.stringify(requestValidation));
+      const blockFromDB = await this.getValueFromDB(address);
+      return blockFromDB;
     }
   }
 
@@ -149,7 +145,7 @@ class ValidationRoutine {
         requestTimestamp: requestTimestamp,
         message: message,
         validationWindow: `${Math.floor(
-          (requestTimestamp - Date.now() + 300 * 1000) / 1000
+          (requestTimestamp - Date.now() + 20 * 1000) / 1000
         )}`,
         messageSignature: "valid"
       }
