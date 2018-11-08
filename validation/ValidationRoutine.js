@@ -25,7 +25,7 @@ class ValidationRoutine {
       const data = await this.getValueFromDB(address);
       const savedRequest = JSON.parse(data);
 
-      const nowMinusFiveMinutes = Date.now() - 20 * 1000;
+      const nowMinusFiveMinutes = Date.now() - 300 * 1000;
       let windowLeft = savedRequest.requestTimestamp - nowMinusFiveMinutes;
       if (windowLeft < 0) {
         try {
@@ -54,17 +54,9 @@ class ValidationRoutine {
         address,
         requestTimestamp: timestamp,
         message,
-        validationWindow: 20
+        validationWindow: 300
       };
 
-      // this.addKeyValueToDB(address, JSON.stringify(requestValidation))
-      //   .then(async () => {
-      //     return await this.getValueFromDB(address);
-      //   })
-      //   .then(value => {
-      //     return value;
-      //   })
-      //   .catch(err => console.log("ERROR while creating record: ", err));
       await this.addKeyValueToDB(address, JSON.stringify(requestValidation));
       const blockFromDB = await this.getValueFromDB(address);
       return blockFromDB;
@@ -82,33 +74,6 @@ class ValidationRoutine {
     }
 
     const savedRequest = JSON.parse(data);
-
-    // // TODO: Refactor
-    // if (savedRequest["status"] !== undefined) {
-    //   if (savedRequest.status.messageSignature === "valid") {
-    //     //TODO return validation with adapted time window
-    //     const nowMinusFiveMinutes = Date.now() - 300 * 1000;
-    //     let windowLeft =
-    //       savedRequest.status.requestTimestamp - nowMinusFiveMinutes;
-    //     if (windowLeft < 0) {
-    //       try {
-    //         await this.removeValidation(addressToCheck);
-    //         return {
-    //           message:
-    //             "The validation window is closed. The star registration request has been removed. Please make another request"
-    //         };
-    //       } catch (error) {
-    //         console.log("ERROR:", error);
-    //       }
-    //     } else {
-    //       const validationWindow = Math.floor(windowLeft / 1000);
-    //       savedRequest.status.validationWindow = validationWindow;
-    //       await this.makeSignatureValid(addressToCheck, savedRequest);
-    //       const modifiedRequest = await this.getValueFromDB(addressToCheck);
-    //       return modifiedRequest;
-    //     }
-    //   }
-    // }
 
     const {
       address,
@@ -145,7 +110,7 @@ class ValidationRoutine {
         requestTimestamp: requestTimestamp,
         message: message,
         validationWindow: `${Math.floor(
-          (requestTimestamp - Date.now() + 20 * 1000) / 1000
+          (requestTimestamp - Date.now() + 300 * 1000) / 1000
         )}`,
         messageSignature: "valid"
       }

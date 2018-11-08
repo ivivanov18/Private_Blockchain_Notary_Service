@@ -82,7 +82,7 @@ class Blockchain {
     //   .catch(err => {
     //     console.error(err);
     //   });
-    await this.addBlock(newBlock.height, JSON.stringify(newBlock));
+    await this.addBlockToDB(newBlock.height, JSON.stringify(newBlock));
     const addedBlock = await this.getBlockFromDB(newBlock.height);
     return addedBlock;
   }

@@ -81,6 +81,7 @@ router.post("/block", async (req, res) => {
     const lastBlock = await blockchain.getBlock(blockHeight);
     res.status(201).send({ blockAdded: lastBlock });
   } catch (error) {
+    console.log(error);
     res.status(400).send({ error });
   }
 });
