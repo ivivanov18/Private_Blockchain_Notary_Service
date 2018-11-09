@@ -4,7 +4,8 @@ const isEmpty = require("./isEmpty");
 module.exports = function validateBlock(data) {
   let errors = {};
 
-  let { address, dec, ra, story } = data;
+  let { address, star } = data;
+  let { dec, ra, story } = star;
 
   address = !isEmpty(address) ? address : "";
   if (Validator.isEmpty(address)) {

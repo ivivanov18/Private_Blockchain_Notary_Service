@@ -63,15 +63,14 @@ router.post("/block", async (req, res) => {
     if (!isValid) {
       return res.status(400).json(errors);
     }
-    const { address, dec, ra, story } = req.body;
+    const { address, star } = req.body;
 
-    const story_in_hex = ascii_to_hexa(story);
+    const story_in_hex = ascii_to_hexa(star.story);
 
     const body = {
       address,
       star: {
-        dec,
-        ra,
+        ...star,
         story: story_in_hex
       }
     };
