@@ -13,7 +13,23 @@ router.get("/address::addr", async (req, res) => {
     const foundBlocksForAddress = await notaryBlockChain.getBlocksByAddress(
       addr
     );
-    res.json({ foundBlocksForAddress });
+    let foundsBlocksWithStoryDecoded = [];
+    const values = Object.values(foundBlocksForAddress);
+    values.forEach(block => {
+      story_in_ascii = hexa_to_ascii(block.body.star.story);
+      foundsBlocksWithStoryDecoded.push({
+        ...block,
+        body: {
+          ...block.body,
+          star: {
+            ...block.body.star,
+            storyDecoded: story_in_ascii
+          }
+        }
+      });
+    });
+
+    res.json({ foundsBlocksWithStoryDecoded });
   } catch (error) {
     const errorMsg = {
       error: `Error while fetching the blocks by their address. The error is : 
