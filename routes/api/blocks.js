@@ -34,7 +34,7 @@ router.get("/block/:height", async (req, res) => {
           ...block.body,
           star: {
             ...block.body.star,
-            story: story_in_ascii
+            storyDecoded: story_in_ascii
           }
         }
       }

@@ -39,7 +39,7 @@ router.get("/hash::hash", async (req, res) => {
           ...blockFound.body,
           star: {
             ...blockFound.body.star,
-            story: story_in_ascii
+            storyDecoded: story_in_ascii
           }
         }
       }
