@@ -40,7 +40,7 @@ class Blockchain {
           console.log("There are no blocks in the blockchain. Adding Genesis");
           this.addBlock(new Block("First block in the chain - Genesis block"))
             .then(() => {
-              return this.getBlockHeight();
+              return this.getBlock(0);
             })
             .then(result => {
               console.log("Genesis block was added to the blockchain", result);

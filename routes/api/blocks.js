@@ -21,23 +21,29 @@ router.get("/block/:height", async (req, res) => {
   const blockchain = req.app.get("blockchain");
 
   const { height } = req.params;
+  console.log(typeof height);
 
   try {
     const block = await blockchain.getBlock(height);
-
-    const story_in_ascii = hexa_to_ascii(block.body.star.story);
-
-    res.status(200).json({
-      blockRequested: {
-        ...block,
-        body: {
-          ...block.body,
-          star: {
-            ...block.body.star,
-            storyDecoded: story_in_ascii
+    //TODO: correct this to get block height 0 genesis
+    if (height !== "0") {
+      const story_in_ascii = hexa_to_ascii(block.body.star.story);
+      res.status(200).json({
+        blockRequested: {
+          ...block,
+          body: {
+            ...block.body,
+            star: {
+              ...block.body.star,
+              storyDecoded: story_in_ascii
+            }
           }
         }
-      }
+      });
+    }
+
+    res.status(200).json({
+      blockRequested: block
     });
   } catch (error) {
     res.status(404).json({
@@ -54,34 +60,41 @@ router.get("/block/:height", async (req, res) => {
  */
 router.post("/block", async (req, res) => {
   const blockchain = req.app.get("blockchain");
+  const validationRoutine = new ValidationRoutine();
 
   try {
-    //TODO: check whether address has possibility to make registration
+    const { address } = req.body;
+    const canAddStarToBlockchain = await validationRoutine.isValidStarRegistrationAddress(
+      address
+    );
 
-    const { isValid, errors } = validateBlock(req.body);
+    if (canAddStarToBlockchain) {
+      const { isValid, errors } = validateBlock(req.body);
 
-    if (!isValid) {
-      return res.status(400).json(errors);
-    }
-    const { address, star } = req.body;
-
-    const story_in_hex = ascii_to_hexa(star.story);
-
-    const body = {
-      address,
-      star: {
-        ...star,
-        story: story_in_hex
+      if (!isValid) {
+        return res.status(400).json(errors);
       }
-    };
+      const { star } = req.body;
+      const story_in_hex = ascii_to_hexa(star.story);
 
-    await blockchain.addBlock(new Block(body));
-    const blockHeight = await blockchain.getBlockHeight();
-    const lastBlock = await blockchain.getBlock(blockHeight);
-    res.status(201).send({ blockAdded: lastBlock });
+      const body = {
+        address,
+        star: {
+          ...star,
+          story: story_in_hex
+        }
+      };
+
+      await blockchain.addBlock(new Block(body));
+      const blockHeight = await blockchain.getBlockHeight();
+      const lastBlock = await blockchain.getBlock(blockHeight);
+      res.status(201).send({ blockAdded: lastBlock });
+    }
   } catch (error) {
-    console.log(error);
-    res.status(400).send({ error });
+    // console.log(error);
+    res.status(400).json({
+      errorMessage: error
+    });
   }
 });
 

@@ -129,13 +129,15 @@ class ValidationRoutine {
   }
 
   async isValidStarRegistrationAddress(addressToCheck) {
-    //TODO: try/catch
-    const saveRequestStr = await this.getValueFromDB(addressToCheck);
-    const saveRequest = JSON.parse(saveRequestStr);
-    if (savedRequest["status"] !== undefined) {
-      return saveRequest.status.messageSignature === "valid" ? true : false;
+    try {
+      const saveRequestStr = await this.getValueFromDB(addressToCheck);
+      const saveRequest = JSON.parse(saveRequestStr);
+      if (savedRequest.status !== undefined) {
+        return saveRequest.status.messageSignature === "valid" ? true : false;
+      }
+    } catch (error) {
+      throw `The address ${addressToCheck} cannot add star to the blockchain. Please make a request for validation`;
     }
-    return false;
   }
 
   async doesStarRequestExist(address) {
