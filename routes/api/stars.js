@@ -44,11 +44,10 @@ router.get("/hash::hash", async (req, res) => {
 
   try {
     const { hash } = req.params;
-    //TODO check whether null
     const blockFound = await notaryBlockChain.getBlockByHash(hash);
     const { height } = blockFound;
 
-    if (height != "0") {
+    if (height !== "0") {
       const story_in_ascii = hexa_to_ascii(blockFound.body.star.story);
       res.status(200).json({
         blockRequested: {

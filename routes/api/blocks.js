@@ -87,6 +87,10 @@ router.post("/block", async (req, res) => {
       const lastBlock = await blockchain.getBlock(blockHeight);
       await validationRoutine.removeValidation(address);
       res.status(201).send({ blockAdded: lastBlock });
+    } else {
+      res.status(400).json({
+        errorMessage: `The address ${address} cannot add star to the blockchain. Please make a request for validation`
+      });
     }
   } catch (error) {
     res.status(400).json({

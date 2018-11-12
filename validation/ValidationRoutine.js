@@ -19,6 +19,7 @@ class ValidationRoutine {
   /**
    * First step in the star registration process
    * @param {*} address
+   * @throws will throw error if there is a problem during removal of closed validation
    */
   async addStarRequest(address) {
     //TODO: improve when message-signature valid and request to add a star for same address
@@ -26,19 +27,24 @@ class ValidationRoutine {
       const data = await this.getValueFromDB(address);
       const savedRequest = JSON.parse(data);
 
+      // In case a record exists for this address and signature has been validated
+      if (!isEmpty(savedRequest.status)) {
+        return JSON.stringify(savedRequest);
+      }
+
       const nowMinusFiveMinutes = Date.now() - 300 * 1000;
       let windowLeft = savedRequest.requestTimestamp - nowMinusFiveMinutes;
       if (windowLeft < 0) {
         try {
           await this.removeValidation(address);
-          //TODO: Fix when deleted --> error notFound
           const response = JSON.stringify({
             message:
               "The validation window is closed. Please make another request"
           });
           return response;
         } catch (error) {
-          console.log("ERROR:", error);
+          console.log("ERROR while removing closed validation:", error);
+          throw "Error while removing closed validation for address provided";
         }
       } else {
         const validationWindow = Math.floor(windowLeft / 1000);
@@ -49,6 +55,7 @@ class ValidationRoutine {
         return updatedRequest;
       }
     } catch (error) {
+      //There is not record for the provided address - there is no request for it
       const timestamp = Date.now();
       const message = `${address}:${timestamp}:starRegistry`;
       const requestValidation = {
@@ -68,6 +75,9 @@ class ValidationRoutine {
    *
    * @param {string} addressToCheck
    * @param {string} signatureToCheck
+   * @throws Will throw an error if the address is not in the DB
+   * @throws Will throw an error if the validation window is not open anymore
+   * @throws Will throw an error if the signature provided is not valid
    * @return response for the validation
    */
   async validateMessageSignature(addressToCheck, signatureToCheck) {
@@ -84,10 +94,6 @@ class ValidationRoutine {
       validationWindow,
       requestTimestamp
     } = savedRequest;
-
-    if (address !== addressToCheck) {
-      throw `The address ${addressToCheck} does not match to existing.`;
-    }
 
     if (
       !this.isValidationWindowOpen(
@@ -115,17 +121,10 @@ class ValidationRoutine {
         messageSignature: "valid"
       }
     };
-    await this.makeSignatureValid(addressToCheck, validResponse);
+    const validResponseToSerializeInDB = JSON.stringify(validResponse);
+    await this.addKeyValueToDB(addressToCheck, validResponseToSerializeInDB);
 
     return validResponse;
-  }
-
-  removeValidation(address) {
-    return db.del(address);
-  }
-
-  makeSignatureValid(address, validResponse) {
-    return db.put(address, JSON.stringify(validResponse));
   }
 
   async isValidStarRegistrationAddress(addressToCheck) {
@@ -135,31 +134,16 @@ class ValidationRoutine {
       if (!isEmpty(savedRequest.status)) {
         return savedRequest.status.messageSignature === "valid" ? true : false;
       }
+      return false;
     } catch (error) {
       throw `The address ${addressToCheck} cannot add star to the blockchain. Please make a request for validation`;
     }
   }
 
-  async doesStarRequestExist(address) {
-    try {
-      const { error, data } = await wrapper(this.getValueFromDB(address));
-      if (!error) {
-        console.log("Data type: ", typeof data);
-        return true;
-      }
-      console.log("Data type: ", typeof data);
-
-      return false;
-    } catch (error) {
-      console.error("Error: ", error);
-      console.log("Data type: ", typeof data);
-
-      return false;
-    }
-  }
-
   /**
-   * Helper
+   * Helper function to verify if the validation window is opend
+   * meaning whether the user can use the current request for validation to verify
+   * the signature
    *
    */
   isValidationWindowOpen(
@@ -168,7 +152,6 @@ class ValidationRoutine {
     validationWindowSaved
   ) {
     const currentTime = currentTimestamp - saveTimestamp;
-    console.log("CURRENT TIME:", currentTime);
     return currentTime < validationWindowSaved * 1000 ? true : false;
   }
 
@@ -189,6 +172,10 @@ class ValidationRoutine {
    */
   getValueFromDB(key) {
     return db.get(key);
+  }
+
+  removeValidation(address) {
+    return db.del(address);
   }
 }
 
