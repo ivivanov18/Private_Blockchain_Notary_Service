@@ -46,19 +46,26 @@ router.get("/hash::hash", async (req, res) => {
     const { hash } = req.params;
     //TODO check whether null
     const blockFound = await notaryBlockChain.getBlockByHash(hash);
-    const story_in_ascii = hexa_to_ascii(blockFound.body.star.story);
+    const { height } = blockFound;
 
-    res.status(200).json({
-      blockRequested: {
-        ...blockFound,
-        body: {
-          ...blockFound.body,
-          star: {
-            ...blockFound.body.star,
-            storyDecoded: story_in_ascii
+    if (height != "0") {
+      const story_in_ascii = hexa_to_ascii(blockFound.body.star.story);
+      res.status(200).json({
+        blockRequested: {
+          ...blockFound,
+          body: {
+            ...blockFound.body,
+            star: {
+              ...blockFound.body.star,
+              storyDecoded: story_in_ascii
+            }
           }
         }
-      }
+      });
+    }
+
+    res.status(200).json({
+      blockRequested: blockFound
     });
   } catch (error) {
     res.status(400).send({ error });
