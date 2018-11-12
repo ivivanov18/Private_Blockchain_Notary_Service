@@ -21,6 +21,7 @@ class ValidationRoutine {
    * @param {*} address
    */
   async addStarRequest(address) {
+    //TODO: improve when message-signature valid and request to add a star for same address
     try {
       const data = await this.getValueFromDB(address);
       const savedRequest = JSON.parse(data);
@@ -63,14 +64,16 @@ class ValidationRoutine {
     }
   }
 
-  // TODO: Throw error instead of false
+  /**
+   *
+   * @param {string} addressToCheck
+   * @param {string} signatureToCheck
+   * @return response for the validation
+   */
   async validateMessageSignature(addressToCheck, signatureToCheck) {
     const { error, data } = await wrapper(this.getValueFromDB(addressToCheck));
     if (error) {
-      console.log("Address Not Found. The error is: ", error);
-      return {
-        message: `The address ${addressToCheck} is not present in the DB.`
-      };
+      throw `The address ${addressToCheck} is not present in the DB.`;
     }
 
     const savedRequest = JSON.parse(data);
@@ -83,8 +86,7 @@ class ValidationRoutine {
     } = savedRequest;
 
     if (address !== addressToCheck) {
-      //TODO: adapt return
-      return false;
+      throw `The address ${addressToCheck} does not match to existing.`;
     }
 
     if (
@@ -94,13 +96,11 @@ class ValidationRoutine {
         validationWindow
       )
     ) {
-      //TODO: adapt return
-      return false;
+      throw `The validation window when to register the star for the address ${addressToCheck} is not open anymore. Please make another request.`;
     }
 
     if (!bitcoinMessage.verify(message, addressToCheck, signatureToCheck)) {
-      //TODO: adapt return
-      return false;
+      throw `The signature is not valid for the address ${addressToCheck}.`;
     }
 
     const validResponse = {
@@ -130,10 +130,10 @@ class ValidationRoutine {
 
   async isValidStarRegistrationAddress(addressToCheck) {
     try {
-      const saveRequestStr = await this.getValueFromDB(addressToCheck);
-      const saveRequest = JSON.parse(saveRequestStr);
-      if (savedRequest.status !== undefined) {
-        return saveRequest.status.messageSignature === "valid" ? true : false;
+      const savedRequestStr = await this.getValueFromDB(addressToCheck);
+      const savedRequest = JSON.parse(savedRequestStr);
+      if (!isEmpty(savedRequest.status)) {
+        return savedRequest.status.messageSignature === "valid" ? true : false;
       }
     } catch (error) {
       throw `The address ${addressToCheck} cannot add star to the blockchain. Please make a request for validation`;

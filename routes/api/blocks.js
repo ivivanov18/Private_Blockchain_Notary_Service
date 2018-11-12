@@ -21,11 +21,9 @@ router.get("/block/:height", async (req, res) => {
   const blockchain = req.app.get("blockchain");
 
   const { height } = req.params;
-  console.log(typeof height);
 
   try {
     const block = await blockchain.getBlock(height);
-    //TODO: correct this to get block height 0 genesis
     if (height !== "0") {
       const story_in_ascii = hexa_to_ascii(block.body.star.story);
       res.status(200).json({
@@ -52,7 +50,6 @@ router.get("/block/:height", async (req, res) => {
   }
 });
 
-//TODO: FIX RETURNED BLOCK AFTER CREATION
 /**
  * @route POST api/blocks/block
  * @desc creates the block with the specified body
@@ -88,10 +85,10 @@ router.post("/block", async (req, res) => {
       await blockchain.addBlock(new Block(body));
       const blockHeight = await blockchain.getBlockHeight();
       const lastBlock = await blockchain.getBlock(blockHeight);
+      await validationRoutine.removeValidation(address);
       res.status(201).send({ blockAdded: lastBlock });
     }
   } catch (error) {
-    // console.log(error);
     res.status(400).json({
       errorMessage: error
     });

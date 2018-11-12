@@ -26,3 +26,6 @@ const PORT = 8000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+//TODO: fix error when signature has been validated and user make request for address with validated signature --> delete valid request in DB after block created
+//TODO: Some error that with validationwindow closed
