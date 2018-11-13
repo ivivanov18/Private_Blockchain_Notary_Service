@@ -26,23 +26,19 @@ router.get("/block/:height", async (req, res) => {
     const block = await blockchain.getBlock(height);
     if (height !== "0") {
       const story_in_ascii = hexa_to_ascii(block.body.star.story);
-      res.status(200).json({
-        blockRequested: {
-          ...block,
-          body: {
-            ...block.body,
-            star: {
-              ...block.body.star,
-              storyDecoded: story_in_ascii
-            }
+      return res.status(200).json({
+        ...block,
+        body: {
+          ...block.body,
+          star: {
+            ...block.body.star,
+            storyDecoded: story_in_ascii
           }
         }
       });
     }
 
-    res.status(200).json({
-      blockRequested: block
-    });
+    return res.status(200).json(block);
   } catch (error) {
     res.status(404).json({
       error: `Block at the requested height - ${height} - is not found`
@@ -86,7 +82,7 @@ router.post("/block", async (req, res) => {
       const blockHeight = await blockchain.getBlockHeight();
       const lastBlock = await blockchain.getBlock(blockHeight);
       await validationRoutine.removeValidation(address);
-      res.status(201).send({ blockAdded: lastBlock });
+      res.status(201).json(lastBlock);
     } else {
       res.status(400).json({
         errorMessage: `The address ${address} cannot add star to the blockchain. Please make a request for validation`

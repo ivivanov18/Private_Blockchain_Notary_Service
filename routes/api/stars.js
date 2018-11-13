@@ -29,7 +29,7 @@ router.get("/address::addr", async (req, res) => {
       });
     });
 
-    res.json({ foundsBlocksWithStoryDecoded });
+    res.json(foundsBlocksWithStoryDecoded);
   } catch (error) {
     const errorMsg = {
       error: `Error while fetching the blocks by their address. The error is : 
@@ -47,25 +47,21 @@ router.get("/hash::hash", async (req, res) => {
     const blockFound = await notaryBlockChain.getBlockByHash(hash);
     const { height } = blockFound;
 
-    if (height !== "0") {
+    if (height != "0") {
       const story_in_ascii = hexa_to_ascii(blockFound.body.star.story);
       res.status(200).json({
-        blockRequested: {
-          ...blockFound,
-          body: {
-            ...blockFound.body,
-            star: {
-              ...blockFound.body.star,
-              storyDecoded: story_in_ascii
-            }
+        ...blockFound,
+        body: {
+          ...blockFound.body,
+          star: {
+            ...blockFound.body.star,
+            storyDecoded: story_in_ascii
           }
         }
       });
+    } else {
+      res.status(200).json(blockFound);
     }
-
-    res.status(200).json({
-      blockRequested: blockFound
-    });
   } catch (error) {
     res.status(400).send({ error });
   }
